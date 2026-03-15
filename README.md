@@ -92,7 +92,6 @@ or view your accounts here:
 
 ## Notes
 
-- Recent tracks are fetched from the Last.fm `user.getRecentTracks` endpoint
 - First-run setup validates both your API key and username before saving config
 - Use `--config` to point to a custom config file if needed
 - `gofm` also reads environment variables through Viper, so `USERNAME` and `API_KEY` can be used as fallbacks
