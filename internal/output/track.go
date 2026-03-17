@@ -2,12 +2,14 @@ package output
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/theOldZoom/gofm/internal/image"
 	"github.com/theOldZoom/gofm/internal/models"
 )
 
 const trackImageWidth = 14
+const lastFMTrackPlaceholderImageID = "2a96cbd8b46e442fc41c2b86b821562f"
 
 func RenderTrack(track models.Track, title string) {
 	infoLines := []string{
@@ -39,7 +41,7 @@ func RenderTrack(track models.Track, title string) {
 
 func bestTrackImageURL(track models.Track) string {
 	for i := len(track.Image) - 1; i >= 0; i-- {
-		if track.Image[i].Url != "" {
+		if track.Image[i].Url != "" && !strings.Contains(track.Image[i].Url, lastFMTrackPlaceholderImageID) {
 			return track.Image[i].Url
 		}
 	}

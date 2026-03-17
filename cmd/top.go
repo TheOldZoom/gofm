@@ -69,8 +69,41 @@ var topArtistsCmd = &cobra.Command{
 	},
 }
 
+var topTracksCmd = &cobra.Command{
+	Use:   "tracks",
+	Short: "Show a user's top tracks",
+	Run: func(cmd *cobra.Command, args []string) {
+		username := viper.GetString("username")
+		if len(args) == 1 {
+			username = args[0]
+		}
+		if username == "" {
+			fmt.Println("No username provided. Pass one explicitly or run setup first.")
+			return
+		}
+		limit, err := cmd.Flags().GetInt("limit")
+		if err != nil {
+			limit = 10
+		}
+		if limit < 1 {
+			limit = 10
+		}
+		tracks, err := api.GetUserTopTracks(username, limit)
+		if err != nil {
+			fmt.Println("Failed to get top tracks:", err)
+			return
+		}
+		for i, track := range tracks {
+			output.RenderTrack(track, fmt.Sprintf("%d. %s", i+1, track.Name))
+			fmt.Println()
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(topCmd)
 	topCmd.AddCommand(topArtistsCmd)
 	topArtistsCmd.Flags().IntP("limit", "l", 10, "Number of artists to show")
+	topCmd.AddCommand(topTracksCmd)
+	topTracksCmd.Flags().IntP("limit", "l", 10, "Number of tracks to show")
 }

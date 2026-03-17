@@ -27,6 +27,12 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 		tracks = tracks[:limit]
 	}
 
+	for i := range tracks {
+		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
+			continue
+		}
+	}
+
 	return tracks, nil
 }
 
@@ -46,6 +52,7 @@ func GetNowPlaying(username string) (*models.Track, error) {
 
 	tracks := resp.RecentTracks.Track
 	if len(tracks) > 0 && tracks[0].Attr.NowPlaying == "true" {
+		_ = EnrichTrackImageFromPage(&tracks[0])
 		return &tracks[0], nil
 	}
 
@@ -78,6 +85,34 @@ func GetUserTopArtists(username string, limit int) ([]models.Artist, error) {
 	}
 
 	return artists, nil
+}
+
+func GetUserTopTracks(username string, limit int) ([]models.Track, error) {
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	var resp models.TopTracksResponse
+
+	err := client.Get("user.getTopTracks", map[string]string{
+		"user":  username,
+		"limit": fmt.Sprintf("%d", limit),
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	tracks := resp.TopTracks.Track
+	if len(tracks) > limit {
+		tracks = tracks[:limit]
+	}
+
+	for i := range tracks {
+		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
+			continue
+		}
+	}
+
+	return tracks, nil
 }
 
 func GetInfo(username string) (*models.UserGetInfoResponse, error) {

@@ -6,8 +6,15 @@ type RecentTracksResponse struct {
 	} `json:"recenttracks"`
 }
 
+type TopTracksResponse struct {
+	TopTracks struct {
+		Track []Track `json:"track"`
+	} `json:"toptracks"`
+}
+
 type Track struct {
 	Name   string `json:"name"`
+	Url    string `json:"url"`
 	Artist struct {
 		Name string `json:"#text"`
 	} `json:"artist"`

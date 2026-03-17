@@ -14,39 +14,48 @@ const lastFMPlaceholderImageID = "2a96cbd8b46e442fc41c2b86b821562f"
 
 var lastFMOGImagePattern = regexp.MustCompile(`<meta[^>]+property="og:image"[^>]+content="([^"]+)"`)
 
-func GetArtistPageImageURL(artistURL string) (string, error) {
-	req, err := http.NewRequest(http.MethodGet, artistURL, nil)
-	if err != nil {
-		return "", err
-	}
-	setBrowserHeaders(req, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+func GetPageImageURL(pageURL string) (string, error) {
+	for range 2 {
+		req, err := http.NewRequest(http.MethodGet, pageURL, nil)
+		if err != nil {
+			return "", err
+		}
+		setBrowserHeaders(req, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
 
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			return "", err
+		}
 
-	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("artist page returned status code %d", resp.StatusCode)
+		body, readErr := io.ReadAll(resp.Body)
+		resp.Body.Close()
+		if readErr != nil {
+			return "", readErr
+		}
+		if resp.StatusCode != http.StatusOK {
+			return "", fmt.Errorf("artist page returned status code %d", resp.StatusCode)
+		}
+
+		matches := lastFMOGImagePattern.FindSubmatch(body)
+		if len(matches) < 2 {
+			return "", nil
+		}
+
+		imageURL := string(matches[1])
+		if isPlaceholderImageURL(imageURL) {
+			return "", nil
+		}
+
+		ok, err := imageURLExists(imageURL)
+		if err != nil {
+			return "", err
+		}
+		if ok {
+			return imageURL, nil
+		}
 	}
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	matches := lastFMOGImagePattern.FindSubmatch(body)
-	if len(matches) < 2 {
-		return "", nil
-	}
-
-	imageURL := string(matches[1])
-	if isPlaceholderArtistImageURL(imageURL) {
-		return "", nil
-	}
-
-	return imageURL, nil
+	return "", nil
 }
 
 func EnrichArtistImageFromPage(artist *models.Artist) error {
@@ -54,7 +63,7 @@ func EnrichArtistImageFromPage(artist *models.Artist) error {
 		return nil
 	}
 
-	imageURL, err := GetArtistPageImageURL(artist.Url)
+	imageURL, err := GetPageImageURL(artist.Url)
 	if err != nil || imageURL == "" {
 		return err
 	}
@@ -72,6 +81,22 @@ func EnrichArtistImageFromPage(artist *models.Artist) error {
 	return nil
 }
 
-func isPlaceholderArtistImageURL(imageURL string) bool {
+func isPlaceholderImageURL(imageURL string) bool {
 	return strings.Contains(imageURL, lastFMPlaceholderImageID)
+}
+
+func imageURLExists(imageURL string) (bool, error) {
+	req, err := http.NewRequest(http.MethodGet, imageURL, nil)
+	if err != nil {
+		return false, err
+	}
+	setBrowserHeaders(req, "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices, nil
 }
