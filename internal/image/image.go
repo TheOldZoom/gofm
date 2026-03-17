@@ -7,27 +7,49 @@ import (
 	_ "image/gif"
 	_ "image/jpeg"
 	_ "image/png"
+	"io"
 	"log"
 	"math"
+	"net/http"
 	"os"
 	"strings"
 )
 
-func LoadImage(path string) (image.Image, error) {
-	f, err := os.Open(path)
+func LoadImage(source string) (image.Image, error) {
+	reader, err := openImageSource(source)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer reader.Close()
 
-	img, _, err := image.Decode(f)
+	img, _, err := image.Decode(reader)
 	if err != nil {
 		return nil, err
 	}
 	return img, nil
 }
 
-func RenderANSI(img image.Image, width int) {
+func openImageSource(source string) (io.ReadCloser, error) {
+	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
+		resp, err := http.Get(source)
+		if err != nil {
+			return nil, err
+		}
+		if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+			resp.Body.Close()
+			return nil, fmt.Errorf("failed to fetch image: %s", resp.Status)
+		}
+		return resp.Body, nil
+	}
+
+	return os.Open(source)
+}
+
+func RenderANSI(source string, width int) {
+	img, err := LoadImage(source)
+	if err != nil {
+		log.Fatal(err)
+	}
 	bounds := img.Bounds()
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
