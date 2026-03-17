@@ -22,8 +22,6 @@ THE SOFTWARE.
 package cmd
 
 import (
-	"log"
-
 	"github.com/spf13/cobra"
 	"github.com/theOldZoom/gofm/internal/image"
 )
@@ -36,11 +34,7 @@ var testCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 
 	Run: func(cmd *cobra.Command, args []string) {
-		img, err := image.LoadImage(args[0])
-		if err != nil {
-			log.Fatal(err)
-		}
-		image.RenderANSI(img, testWidth)
+		image.RenderANSI(args[0], testWidth)
 	},
 }
 
