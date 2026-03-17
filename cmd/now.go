@@ -54,6 +54,7 @@ var nowCmd = &cobra.Command{
 		}
 		img := track.Image[len(track.Image)-1].Url
 		image.RenderANSI(img, 14)
+		fmt.Println()
 		fmt.Printf("Title: %s\n", track.Name)
 		fmt.Printf("Artist: %s\n", track.Artist.Name)
 		fmt.Printf("Album: %s\n", track.Album.Name)
