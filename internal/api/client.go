@@ -9,6 +9,7 @@ import (
 )
 
 const BaseURL = "https://ws.audioscrobbler.com/2.0/"
+const browserUserAgent = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36"
 
 type Client struct {
 	ApiKey string
@@ -35,6 +36,15 @@ type apiErrorResponse struct {
 	Message string `json:"message"`
 }
 
+func setBrowserHeaders(req *http.Request, accept string) {
+	req.Header.Set("User-Agent", browserUserAgent)
+	req.Header.Set("Accept", accept)
+	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+	req.Header.Set("Cache-Control", "no-cache")
+	req.Header.Set("Pragma", "no-cache")
+	req.Header.Set("DNT", "1")
+}
+
 func (c *Client) Get(method string, params map[string]string, out any) error {
 	q := url.Values{}
 	q.Set("method", method)
@@ -49,7 +59,7 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 	if err != nil {
 		return err
 	}
-	req.Header.Set("User-Agent", "gofm")
+	setBrowserHeaders(req, "application/json,text/plain,*/*")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {

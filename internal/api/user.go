@@ -52,6 +52,34 @@ func GetNowPlaying(username string) (*models.Track, error) {
 	return nil, nil
 }
 
+func GetUserTopArtists(username string, limit int) ([]models.Artist, error) {
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	var resp models.TopArtistsResponse
+
+	err := client.Get("user.getTopArtists", map[string]string{
+		"user":  username,
+		"limit": fmt.Sprintf("%d", limit),
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	artists := resp.TopArtists.Artist
+	if len(artists) > limit {
+		artists = artists[:limit]
+	}
+
+	for i := range artists {
+		if err := EnrichArtistImageFromPage(&artists[i]); err != nil {
+			continue
+		}
+	}
+
+	return artists, nil
+}
+
 func GetInfo(username string) (*models.UserGetInfoResponse, error) {
 	client := &Client{
 		ApiKey: viper.GetString("api_key"),
