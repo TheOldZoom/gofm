@@ -53,11 +53,20 @@ var nowCmd = &cobra.Command{
 			return
 		}
 		img := track.Image[len(track.Image)-1].Url
-		image.RenderANSI(img, 14)
-		fmt.Println()
-		fmt.Printf("Title: %s\n", track.Name)
-		fmt.Printf("Artist: %s\n", track.Artist.Name)
-		fmt.Printf("Album: %s\n", track.Album.Name)
+		const imageWidth = 14
+		imgLines, err := image.RenderANSILines(img, imageWidth)
+		if err != nil {
+			fmt.Println("Failed to render album art:", err)
+			return
+		}
+
+		infoLines := []string{
+			fmt.Sprintf("Title: %s", track.Name),
+			fmt.Sprintf("Artist: %s", track.Artist.Name),
+			fmt.Sprintf("Album: %s", track.Album.Name),
+		}
+
+		image.RenderSideBySide(imgLines, infoLines, imageWidth)
 
 	},
 }

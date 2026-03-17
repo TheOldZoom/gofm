@@ -46,18 +46,29 @@ func openImageSource(source string) (io.ReadCloser, error) {
 }
 
 func RenderANSI(source string, width int) {
-	img, err := LoadImage(source)
+	lines, err := RenderANSILines(source, width)
 	if err != nil {
 		log.Fatal(err)
+	}
+	for _, line := range lines {
+		fmt.Println(line)
+	}
+}
+
+func RenderANSILines(source string, width int) ([]string, error) {
+	img, err := LoadImage(source)
+	if err != nil {
+		return nil, err
 	}
 	bounds := img.Bounds()
 	srcW := bounds.Dx()
 	srcH := bounds.Dy()
 	if srcW == 0 || srcH == 0 {
-		log.Fatal("image has no size")
+		return nil, fmt.Errorf("image has no size")
 	}
 
 	height := int(math.Max(1, math.Round(float64(srcH)*float64(width)/float64(srcW)/2)))
+	lines := make([]string, 0, height)
 
 	for y := 0; y < height; y++ {
 		var line strings.Builder
@@ -68,9 +79,11 @@ func RenderANSI(source string, width int) {
 			br, bg, bb := Rgb(bottom)
 			fmt.Fprintf(&line, "\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm▀", tr, tg, tb, br, bg, bb)
 		}
-		line.WriteString("\x1b[0m\n")
-		fmt.Print(line.String())
+		line.WriteString("\x1b[0m")
+		lines = append(lines, line.String())
 	}
+
+	return lines, nil
 }
 
 func RenderASCII(img image.Image, width int) {
@@ -109,4 +122,28 @@ func Sample(img image.Image, x, y, dstW, dstH int) color.Color {
 func Rgb(c color.Color) (uint8, uint8, uint8) {
 	r, g, b, _ := c.RGBA()
 	return uint8(r >> 8), uint8(g >> 8), uint8(b >> 8)
+}
+
+func RenderSideBySide(leftLines, rightLines []string, leftWidth int) {
+	rows := len(leftLines)
+	if len(rightLines) > rows {
+		rows = len(rightLines)
+	}
+
+	leftStart := (rows - len(leftLines)) / 2
+	rightStart := (rows - len(rightLines)) / 2
+
+	for i := 0; i < rows; i++ {
+		left := strings.Repeat(" ", leftWidth)
+		if i >= leftStart && i < leftStart+len(leftLines) {
+			left = leftLines[i-leftStart]
+		}
+
+		right := ""
+		if i >= rightStart && i < rightStart+len(rightLines) {
+			right = rightLines[i-rightStart]
+		}
+
+		fmt.Printf("%s  %s\n", left, right)
+	}
 }
