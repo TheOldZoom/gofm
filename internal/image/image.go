@@ -125,13 +125,12 @@ func Rgb(c color.Color) (uint8, uint8, uint8) {
 }
 
 func RenderSideBySide(leftLines, rightLines []string, leftWidth int) {
-	rows := len(leftLines)
-	if len(rightLines) > rows {
-		rows = len(rightLines)
-	}
-
 	leftStart := 0
 	rightStart := 1
+	rows := leftStart + len(leftLines)
+	if rightStart+len(rightLines) > rows {
+		rows = rightStart + len(rightLines)
+	}
 
 	for i := 0; i < rows; i++ {
 		left := strings.Repeat(" ", leftWidth)
