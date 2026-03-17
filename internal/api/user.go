@@ -23,9 +23,6 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 	}
 
 	tracks := resp.RecentTracks.Track
-	if len(tracks) > 0 && tracks[0].Attr.NowPlaying == "true" {
-		tracks = tracks[1:]
-	}
 	if len(tracks) > limit {
 		tracks = tracks[:limit]
 	}
