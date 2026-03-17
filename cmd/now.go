@@ -27,7 +27,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/theOldZoom/gofm/internal/api"
-	"github.com/theOldZoom/gofm/internal/image"
+	"github.com/theOldZoom/gofm/internal/output"
 )
 
 var nowCmd = &cobra.Command{
@@ -52,23 +52,7 @@ var nowCmd = &cobra.Command{
 			fmt.Println("No track is currently playing.")
 			return
 		}
-		img := track.Image[len(track.Image)-1].Url
-		const imageWidth = 14
-		imgLines, err := image.RenderANSILines(img, imageWidth)
-		if err != nil {
-			fmt.Println("Failed to render album art:", err)
-			return
-		}
-
-		infoLines := []string{
-			fmt.Sprintf("%s", track.Name),
-			fmt.Sprintf("\x1b[38;2;100;100;100m%s", track.Artist.Name),
-			fmt.Sprint(),
-			fmt.Sprint(),
-			fmt.Sprintf("Album: %s", track.Album.Name),
-		}
-
-		image.RenderSideBySide(imgLines, infoLines, imageWidth)
+		output.RenderTrack(*track, track.Name)
 
 	},
 }

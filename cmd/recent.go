@@ -25,7 +25,7 @@ import (
 	"fmt"
 
 	"github.com/theOldZoom/gofm/internal/api"
-	"github.com/theOldZoom/gofm/internal/image"
+	"github.com/theOldZoom/gofm/internal/output"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -54,21 +54,9 @@ var recentCmd = &cobra.Command{
 			fmt.Println("Failed to get recent tracks:", err)
 			return
 		}
-		for i, track := range tracks {
-			img := track.Image[len(track.Image)-1].Url
-			imgLines, err := image.RenderANSILines(img, 14)
-			if err != nil {
-				fmt.Println("Failed to render album art:", err)
-				return
-			}
-			infoLines := []string{
-				fmt.Sprintf("%d.", i+1),
-				fmt.Sprintf("title: %s", track.Name),
-				fmt.Sprintf("artist: %s", track.Artist.Name),
 
-				fmt.Sprintf("Album: %s", track.Album.Name),
-			}
-			image.RenderSideBySide(imgLines, infoLines, 14)
+		for i, track := range tracks {
+			output.RenderTrack(track, fmt.Sprintf("%d. %s", i+1, track.Name))
 			fmt.Println()
 		}
 	},
