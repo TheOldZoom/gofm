@@ -130,8 +130,8 @@ func RenderSideBySide(leftLines, rightLines []string, leftWidth int) {
 		rows = len(rightLines)
 	}
 
-	leftStart := (rows - len(leftLines)) / 2
-	rightStart := (rows - len(rightLines)) / 2
+	leftStart := 0
+	rightStart := 1
 
 	for i := 0; i < rows; i++ {
 		left := strings.Repeat(" ", leftWidth)

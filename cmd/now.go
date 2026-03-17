@@ -61,8 +61,10 @@ var nowCmd = &cobra.Command{
 		}
 
 		infoLines := []string{
-			fmt.Sprintf("Title: %s", track.Name),
-			fmt.Sprintf("Artist: %s", track.Artist.Name),
+			fmt.Sprintf("%s", track.Name),
+			fmt.Sprintf("\x1b[38;2;100;100;100m%s", track.Artist.Name),
+            fmt.Sprint(""),
+            fmt.Sprint(""),
 			fmt.Sprintf("Album: %s", track.Album.Name),
 		}
 
