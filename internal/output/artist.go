@@ -6,6 +6,7 @@ import (
 
 	"github.com/theOldZoom/gofm/internal/image"
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 const artistImageWidth = 14
@@ -26,12 +27,14 @@ func RenderArtist(artist models.Artist, title string) {
 
 	img := bestArtistImageURL(artist)
 	if img == "" {
+		verbose.Printf("rendering artist without image: %s", artist.Name)
 		printLines(infoLines)
 		return
 	}
 
 	imgLines, err := image.RenderANSILines(img, artistImageWidth)
 	if err != nil {
+		verbose.Printf("artist image render failed for %s: %v", artist.Name, err)
 		printLines(infoLines)
 		return
 	}

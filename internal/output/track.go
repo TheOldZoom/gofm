@@ -6,6 +6,7 @@ import (
 
 	"github.com/theOldZoom/gofm/internal/image"
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 const trackImageWidth = 14
@@ -26,12 +27,14 @@ func RenderTrack(track models.Track, title string) {
 
 	img := bestTrackImageURL(track)
 	if img == "" {
+		verbose.Printf("rendering track without image: %s", track.Name)
 		printLines(infoLines)
 		return
 	}
 
 	imgLines, err := image.RenderANSILines(img, trackImageWidth)
 	if err != nil {
+		verbose.Printf("track image render failed for %s: %v", track.Name, err)
 		printLines(infoLines)
 		return
 	}

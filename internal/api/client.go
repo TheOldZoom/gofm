@@ -6,6 +6,8 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 const BaseURL = "https://ws.audioscrobbler.com/2.0/"
@@ -60,9 +62,11 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 		return err
 	}
 	setBrowserHeaders(req, "application/json,text/plain,*/*")
+	verbose.Printf("lastfm request: %s", req.URL.String())
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
+		verbose.Printf("lastfm request failed: %v", err)
 		return err
 	}
 
@@ -73,8 +77,11 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 		return err
 	}
 
+	verbose.PrintJSONBytes(fmt.Sprintf("lastfm response body: %s", method), body)
+
 	var apiErr apiErrorResponse
 	if err := json.Unmarshal(body, &apiErr); err == nil && apiErr.Error != 0 {
+		verbose.Printf("lastfm api error: code=%d message=%s", apiErr.Error, apiErr.Message)
 		return &APIError{
 			Code:       apiErr.Error,
 			Message:    apiErr.Message,
@@ -83,8 +90,11 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		verbose.Printf("lastfm unexpected status: %d", resp.StatusCode)
 		return fmt.Errorf("API returned status code %d", resp.StatusCode)
 	}
+
+	verbose.Printf("lastfm response ok: %s status=%d", method, resp.StatusCode)
 
 	return json.Unmarshal(body, out)
 }

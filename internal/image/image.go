@@ -13,6 +13,8 @@ import (
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 func LoadImage(source string) (image.Image, error) {
@@ -31,6 +33,7 @@ func LoadImage(source string) (image.Image, error) {
 
 func openImageSource(source string) (io.ReadCloser, error) {
 	if strings.HasPrefix(source, "http://") || strings.HasPrefix(source, "https://") {
+		verbose.Printf("loading remote image: %s", source)
 		resp, err := http.Get(source)
 		if err != nil {
 			return nil, err
@@ -42,6 +45,7 @@ func openImageSource(source string) (io.ReadCloser, error) {
 		return resp.Body, nil
 	}
 
+	verbose.Printf("loading local image: %s", source)
 	return os.Open(source)
 }
 

@@ -27,6 +27,7 @@ import (
 
 	"github.com/theOldZoom/gofm/internal/config"
 	"github.com/theOldZoom/gofm/internal/tui/setup"
+	"github.com/theOldZoom/gofm/internal/verbose"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -43,8 +44,10 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
+	verbose.Printf("executing root command")
 	err := rootCmd.Execute()
 	if err != nil {
+		verbose.Printf("root command failed: %v", err)
 		os.Exit(1)
 	}
 }
@@ -53,23 +56,29 @@ func init() {
 	cobra.OnInitialize(initConfig)
 
 	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $XDG_CONFIG_HOME/gofm/config.yaml)")
+	rootCmd.PersistentFlags().BoolP("verbose", "V", false, "verbose output")
+	cobra.CheckErr(viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose")))
 }
 
 func initConfig() {
 	if cfgFile != "" {
+		verbose.Printf("using explicit config file: %s", cfgFile)
 		config.SetPath(cfgFile)
 		viper.SetConfigFile(cfgFile)
 	} else {
 		path, err := config.Path()
 		cobra.CheckErr(err)
+		verbose.Printf("resolved config path: %s", path)
 		config.SetPath(path)
 		viper.SetConfigFile(path)
 	}
 
 	viper.AutomaticEnv()
+	verbose.Printf("automatic environment loading enabled")
 
 	err := viper.ReadInConfig()
 	if err == nil {
+		verbose.Printf("config loaded from: %s", viper.ConfigFileUsed())
 		return
 	}
 
@@ -78,9 +87,11 @@ func initConfig() {
 		cobra.CheckErr(err)
 	}
 
+	verbose.Printf("config not found, starting interactive setup")
 	cfg, err := setup.Run()
 	cobra.CheckErr(err)
 
 	viper.Set("username", cfg.Username)
 	viper.Set("api_key", cfg.ApiKey)
+	verbose.Printf("setup completed, configuration stored in memory")
 }

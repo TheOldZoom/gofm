@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 const lastFMPlaceholderImageID = "2a96cbd8b46e442fc41c2b86b821562f"
@@ -15,7 +16,9 @@ const lastFMPlaceholderImageID = "2a96cbd8b46e442fc41c2b86b821562f"
 var lastFMOGImagePattern = regexp.MustCompile(`<meta[^>]+property="og:image"[^>]+content="([^"]+)"`)
 
 func GetPageImageURL(pageURL string) (string, error) {
-	for range 2 {
+	for attempt := 1; attempt <= 2; attempt++ {
+		verbose.Printf("page image lookup attempt %d: %s", attempt, pageURL)
+
 		req, err := http.NewRequest(http.MethodGet, pageURL, nil)
 		if err != nil {
 			return "", err
@@ -30,6 +33,7 @@ func GetPageImageURL(pageURL string) (string, error) {
 		body, readErr := io.ReadAll(resp.Body)
 		resp.Body.Close()
 		if readErr != nil {
+			verbose.Printf("page image read failed: %v", readErr)
 			return "", readErr
 		}
 		if resp.StatusCode != http.StatusOK {
@@ -38,23 +42,30 @@ func GetPageImageURL(pageURL string) (string, error) {
 
 		matches := lastFMOGImagePattern.FindSubmatch(body)
 		if len(matches) < 2 {
+			verbose.Printf("page image not found in metadata: %s", pageURL)
 			return "", nil
 		}
 
 		imageURL := string(matches[1])
 		if isPlaceholderImageURL(imageURL) {
+			verbose.Printf("page image was placeholder: %s", imageURL)
 			return "", nil
 		}
 
 		ok, err := imageURLExists(imageURL)
 		if err != nil {
+			verbose.Printf("page image verification failed: %v", err)
 			return "", err
 		}
 		if ok {
+			verbose.Printf("page image verified: %s", imageURL)
 			return imageURL, nil
 		}
+
+		verbose.Printf("page image missing, refetching metadata: %s", imageURL)
 	}
 
+	verbose.Printf("page image lookup exhausted retries: %s", pageURL)
 	return "", nil
 }
 
@@ -65,6 +76,9 @@ func EnrichArtistImageFromPage(artist *models.Artist) error {
 
 	imageURL, err := GetPageImageURL(artist.Url)
 	if err != nil || imageURL == "" {
+		if err != nil {
+			verbose.Printf("artist image enrichment failed for %s: %v", artist.Name, err)
+		}
 		return err
 	}
 
@@ -78,6 +92,7 @@ func EnrichArtistImageFromPage(artist *models.Artist) error {
 		},
 	}
 
+	verbose.Printf("artist image enriched from page: %s -> %s", artist.Name, imageURL)
 	return nil
 }
 
@@ -98,5 +113,10 @@ func imageURLExists(imageURL string) (bool, error) {
 	}
 	defer resp.Body.Close()
 
-	return resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices, nil
+	ok := resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices
+	if !ok {
+		verbose.Printf("image url check failed: %s status=%d", imageURL, resp.StatusCode)
+	}
+
+	return ok, nil
 }

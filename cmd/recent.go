@@ -26,6 +26,7 @@ import (
 
 	"github.com/theOldZoom/gofm/internal/api"
 	"github.com/theOldZoom/gofm/internal/output"
+	"github.com/theOldZoom/gofm/internal/verbose"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -44,17 +45,21 @@ var recentCmd = &cobra.Command{
 		if len(args) == 1 {
 			username = args[0]
 		}
+		verbose.Printf("command recent: username=%q limit=%d args=%v", username, limit, args)
 		if username == "" {
+			verbose.Printf("command recent aborted: missing username")
 			fmt.Println("No username provided. Pass one explicitly or run setup first.")
 			return
 		}
 
 		tracks, err := api.GetRecentTracks(username, limit)
 		if err != nil {
+			verbose.Printf("command recent failed: %v", err)
 			fmt.Println("Failed to get recent tracks:", err)
 			return
 		}
 
+		verbose.Printf("command recent rendering %d tracks", len(tracks))
 		for i, track := range tracks {
 			output.RenderTrack(track, fmt.Sprintf("%d. %s", i+1, track.Name))
 			fmt.Println()

@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/theOldZoom/gofm/internal/api"
 	"github.com/theOldZoom/gofm/internal/output"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 var topCmd = &cobra.Command{
@@ -47,6 +48,7 @@ var topArtistsCmd = &cobra.Command{
 			username = args[0]
 		}
 		if username == "" {
+			verbose.Printf("command top artists aborted: missing username")
 			fmt.Println("No username provided. Pass one explicitly or run setup first.")
 			return
 		}
@@ -57,11 +59,14 @@ var topArtistsCmd = &cobra.Command{
 		if limit < 1 {
 			limit = 10
 		}
+		verbose.Printf("command top artists: username=%q limit=%d args=%v", username, limit, args)
 		artists, err := api.GetUserTopArtists(username, limit)
 		if err != nil {
+			verbose.Printf("command top artists failed: %v", err)
 			fmt.Println("Failed to get top artists:", err)
 			return
 		}
+		verbose.Printf("command top artists rendering %d artists", len(artists))
 		for i, artist := range artists {
 			output.RenderArtist(artist, fmt.Sprintf("%d. %s", i+1, artist.Name))
 			fmt.Println()
@@ -78,6 +83,7 @@ var topTracksCmd = &cobra.Command{
 			username = args[0]
 		}
 		if username == "" {
+			verbose.Printf("command top tracks aborted: missing username")
 			fmt.Println("No username provided. Pass one explicitly or run setup first.")
 			return
 		}
@@ -88,11 +94,14 @@ var topTracksCmd = &cobra.Command{
 		if limit < 1 {
 			limit = 10
 		}
+		verbose.Printf("command top tracks: username=%q limit=%d args=%v", username, limit, args)
 		tracks, err := api.GetUserTopTracks(username, limit)
 		if err != nil {
+			verbose.Printf("command top tracks failed: %v", err)
 			fmt.Println("Failed to get top tracks:", err)
 			return
 		}
+		verbose.Printf("command top tracks rendering %d tracks", len(tracks))
 		for i, track := range tracks {
 			output.RenderTrack(track, fmt.Sprintf("%d. %s", i+1, track.Name))
 			fmt.Println()

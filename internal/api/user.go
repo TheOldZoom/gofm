@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/verbose"
 
 	"github.com/spf13/viper"
 )
@@ -29,10 +30,12 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 
 	for i := range tracks {
 		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
+			verbose.Printf("recent track image fallback failed for %s: %v", tracks[i].Name, err)
 			continue
 		}
 	}
 
+	verbose.Printf("fetched %d recent tracks for %s", len(tracks), username)
 	return tracks, nil
 }
 
@@ -52,10 +55,14 @@ func GetNowPlaying(username string) (*models.Track, error) {
 
 	tracks := resp.RecentTracks.Track
 	if len(tracks) > 0 && tracks[0].Attr.NowPlaying == "true" {
-		_ = EnrichTrackImageFromPage(&tracks[0])
+		if err := EnrichTrackImageFromPage(&tracks[0]); err != nil {
+			verbose.Printf("now playing image fallback failed for %s: %v", tracks[0].Name, err)
+		}
+		verbose.Printf("now playing track found for %s: %s", username, tracks[0].Name)
 		return &tracks[0], nil
 	}
 
+	verbose.Printf("no now playing track for %s", username)
 	return nil, nil
 }
 
@@ -80,10 +87,12 @@ func GetUserTopArtists(username string, limit int) ([]models.Artist, error) {
 
 	for i := range artists {
 		if err := EnrichArtistImageFromPage(&artists[i]); err != nil {
+			verbose.Printf("top artist image fallback failed for %s: %v", artists[i].Name, err)
 			continue
 		}
 	}
 
+	verbose.Printf("fetched %d top artists for %s", len(artists), username)
 	return artists, nil
 }
 
@@ -108,10 +117,12 @@ func GetUserTopTracks(username string, limit int) ([]models.Track, error) {
 
 	for i := range tracks {
 		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
+			verbose.Printf("top track image fallback failed for %s: %v", tracks[i].Name, err)
 			continue
 		}
 	}
 
+	verbose.Printf("fetched %d top tracks for %s", len(tracks), username)
 	return tracks, nil
 }
 
@@ -128,6 +139,7 @@ func GetInfo(username string) (*models.UserGetInfoResponse, error) {
 		return nil, err
 	}
 
+	verbose.Printf("fetched user info for %s", username)
 	return &resp, nil
 }
 

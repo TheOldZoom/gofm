@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/theOldZoom/gofm/internal/api"
+	"github.com/theOldZoom/gofm/internal/verbose"
 
 	"go.yaml.in/yaml/v3"
 )
@@ -27,7 +28,11 @@ func Save(cfg *Config) error {
 		return err
 	}
 
-	return os.WriteFile(path, data, 0644)
+	err = os.WriteFile(path, data, 0644)
+	if err == nil {
+		verbose.Printf("saved config file: %s", path)
+	}
+	return err
 }
 
 func ValidateAPIKey(apiKey string) error {
@@ -35,6 +40,7 @@ func ValidateAPIKey(apiKey string) error {
 		return fmt.Errorf("API key is required")
 	}
 
+	verbose.Printf("validating api key")
 	return api.ValidateAPIKey(apiKey)
 }
 
@@ -43,6 +49,7 @@ func ValidateUsername(username string, apiKey string) error {
 		return fmt.Errorf("username is required")
 	}
 
+	verbose.Printf("validating username: %s", username)
 	return api.ValidateUsername(username, apiKey)
 }
 

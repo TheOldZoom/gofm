@@ -28,6 +28,7 @@ import (
 	"github.com/spf13/viper"
 	"github.com/theOldZoom/gofm/internal/api"
 	"github.com/theOldZoom/gofm/internal/output"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 var nowCmd = &cobra.Command{
@@ -38,20 +39,25 @@ var nowCmd = &cobra.Command{
 		if len(args) == 1 {
 			username = args[0]
 		}
+		verbose.Printf("command now: username=%q args=%v", username, args)
 		if username == "" {
+			verbose.Printf("command now aborted: missing username")
 			fmt.Println("No username provided. Pass one explicitly or run setup first.")
 			return
 		}
 
 		track, err := api.GetNowPlaying(username)
 		if err != nil {
+			verbose.Printf("command now failed: %v", err)
 			fmt.Println("Failed to get now playing track:", err)
 			return
 		}
 		if track == nil {
+			verbose.Printf("command now: no track currently playing")
 			fmt.Println("No track is currently playing.")
 			return
 		}
+		verbose.Printf("command now rendering track: %s", track.Name)
 		output.RenderTrack(*track, track.Name)
 
 	},
