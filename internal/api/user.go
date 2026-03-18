@@ -28,12 +28,7 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 		tracks = tracks[:limit]
 	}
 
-	for i := range tracks {
-		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
-			verbose.Printf("recent track image fallback failed for %s: %v", tracks[i].Name, err)
-			continue
-		}
-	}
+	enrichTracksConcurrently("recent", tracks)
 
 	verbose.Printf("fetched %d recent tracks for %s", len(tracks), username)
 	return tracks, nil
@@ -85,12 +80,7 @@ func GetUserTopArtists(username string, limit int) ([]models.Artist, error) {
 		artists = artists[:limit]
 	}
 
-	for i := range artists {
-		if err := EnrichArtistImageFromPage(&artists[i]); err != nil {
-			verbose.Printf("top artist image fallback failed for %s: %v", artists[i].Name, err)
-			continue
-		}
-	}
+	enrichArtistsConcurrently("top", artists)
 
 	verbose.Printf("fetched %d top artists for %s", len(artists), username)
 	return artists, nil
@@ -115,12 +105,7 @@ func GetUserTopTracks(username string, limit int) ([]models.Track, error) {
 		tracks = tracks[:limit]
 	}
 
-	for i := range tracks {
-		if err := EnrichTrackImageFromPage(&tracks[i]); err != nil {
-			verbose.Printf("top track image fallback failed for %s: %v", tracks[i].Name, err)
-			continue
-		}
-	}
+	enrichTracksConcurrently("top", tracks)
 
 	verbose.Printf("fetched %d top tracks for %s", len(tracks), username)
 	return tracks, nil
