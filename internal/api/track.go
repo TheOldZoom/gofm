@@ -6,6 +6,37 @@ import (
 	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
+func GetTrackInfo(artistName string, trackName string, username string) (*models.Track, error) {
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	var resp models.TrackGetInfoResponse
+
+	params := map[string]string{
+		"artist":      artistName,
+		"track":       trackName,
+		"autocorrect": "1",
+	}
+	if username != "" {
+		params["username"] = username
+	}
+
+	err := client.Get("track.getInfo", params, &resp)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.Track.Name == "" {
+		return nil, nil
+	}
+
+	if err := EnrichTrackImageFromPage(&resp.Track); err != nil {
+		verbose.Printf("info track image fallback failed for %s: %v", resp.Track.Name, err)
+	}
+
+	return &resp.Track, nil
+}
+
 func EnrichTrackAlbumFromAPI(track *models.Track) error {
 	if track == nil || track.Name == "" || track.Artist.Name == "" || track.Album.Name != "" {
 		return nil

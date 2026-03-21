@@ -32,7 +32,7 @@ import (
 )
 
 var nowCmd = &cobra.Command{
-	Use:   "now",
+	Use:   "now [username]",
 	Short: "Show currently playing track",
 	Run: func(cmd *cobra.Command, args []string) {
 		username := viper.GetString("username")

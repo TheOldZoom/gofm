@@ -14,6 +14,31 @@ type TopTracksResponse struct {
 	} `json:"toptracks"`
 }
 
+type TrackStreamable struct {
+	Text      string
+	FullTrack string
+}
+
+func (s *TrackStreamable) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		s.Text = text
+		return nil
+	}
+
+	var raw struct {
+		Text      string `json:"#text"`
+		FullTrack string `json:"fulltrack"`
+	}
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	s.Text = raw.Text
+	s.FullTrack = raw.FullTrack
+	return nil
+}
+
 type TrackArtist struct {
 	Name string
 	URL  string
@@ -54,17 +79,27 @@ func (a TrackArtist) MarshalJSON() ([]byte, error) {
 }
 
 type TrackAlbum struct {
-	Name string
-	URL  string
-	MBID string
+	Name   string
+	URL    string
+	MBID   string
+	Artist string
+	Image  []struct {
+		Size string `json:"size"`
+		Url  string `json:"#text"`
+	}
 }
 
 func (a *TrackAlbum) UnmarshalJSON(data []byte) error {
 	var raw struct {
-		Text  string `json:"#text"`
-		Title string `json:"title"`
-		URL   string `json:"url"`
-		MBID  string `json:"mbid"`
+		Text   string `json:"#text"`
+		Title  string `json:"title"`
+		URL    string `json:"url"`
+		MBID   string `json:"mbid"`
+		Artist string `json:"artist"`
+		Image  []struct {
+			Size string `json:"size"`
+			Url  string `json:"#text"`
+		} `json:"image"`
 	}
 
 	if err := json.Unmarshal(data, &raw); err != nil {
@@ -77,34 +112,60 @@ func (a *TrackAlbum) UnmarshalJSON(data []byte) error {
 	}
 	a.URL = raw.URL
 	a.MBID = raw.MBID
+	a.Artist = raw.Artist
+	a.Image = raw.Image
 	return nil
 }
 
 func (a TrackAlbum) MarshalJSON() ([]byte, error) {
 	return json.Marshal(struct {
-		Name string `json:"name,omitempty"`
-		URL  string `json:"url,omitempty"`
-		MBID string `json:"mbid,omitempty"`
+		Name   string `json:"name,omitempty"`
+		URL    string `json:"url,omitempty"`
+		MBID   string `json:"mbid,omitempty"`
+		Artist string `json:"artist,omitempty"`
+		Image  []struct {
+			Size string `json:"size"`
+			Url  string `json:"#text"`
+		} `json:"image,omitempty"`
 	}{
-		Name: a.Name,
-		URL:  a.URL,
-		MBID: a.MBID,
+		Name:   a.Name,
+		URL:    a.URL,
+		MBID:   a.MBID,
+		Artist: a.Artist,
+		Image:  a.Image,
 	})
 }
 
 type Track struct {
-	Name   string      `json:"name"`
-	Url    string      `json:"url"`
-	Artist TrackArtist `json:"artist"`
-	Album  TrackAlbum  `json:"album"`
-	Image  []struct {
+	Name       string          `json:"name"`
+	MBID       string          `json:"mbid"`
+	Url        string          `json:"url"`
+	Duration   string          `json:"duration"`
+	Streamable TrackStreamable `json:"streamable"`
+	Listeners  string          `json:"listeners"`
+	Artist     TrackArtist     `json:"artist"`
+	Album      TrackAlbum      `json:"album"`
+	Image      []struct {
 		Size string `json:"size"`
 		Url  string `json:"#text"`
 	} `json:"image"`
 	Attr struct {
 		NowPlaying string `json:"nowplaying"`
 	} `json:"@attr,omitempty"`
-	PlayCount string `json:"playcount"`
+	PlayCount     string `json:"playcount"`
+	UserPlayCount string `json:"userplaycount"`
+	UserLoved     string `json:"userloved"`
+	TopTags       struct {
+		Tag []struct {
+			Name string `json:"name"`
+			Url  string `json:"url"`
+		} `json:"tag"`
+	} `json:"toptags"`
+	Wiki struct {
+		Published string `json:"published"`
+		Summary   string `json:"summary"`
+		Content   string `json:"content"`
+	} `json:"wiki"`
 }
 
 type TrackGetInfoResponse struct {

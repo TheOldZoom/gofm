@@ -43,7 +43,7 @@ var infoCmd = &cobra.Command{
 }
 
 var infoArtistCmd = &cobra.Command{
-	Use:   "artist",
+	Use:   "artist \"[artist name]\"",
 	Short: "Show information about an artist",
 	Run: func(cmd *cobra.Command, args []string) {
 		username, _ := cmd.Flags().GetString("username")
@@ -83,9 +83,92 @@ var infoArtistCmd = &cobra.Command{
 	},
 }
 
+var infoTrackCmd = &cobra.Command{
+	Use:   "track \"[track name]\" \"[artist name]\"",
+	Short: "Show information about a track",
+	Run: func(cmd *cobra.Command, args []string) {
+		username, _ := cmd.Flags().GetString("username")
+		if username == "" {
+			username = viper.GetString("username")
+		}
+		trackName := ""
+		artistName := ""
+		switch {
+		case len(args) == 0:
+		case artistName != "":
+			trackName = strings.Join(args, " ")
+		case len(args) == 1:
+			trackName = args[0]
+		default:
+			trackName = strings.Join(args[:len(args)-1], " ")
+			artistName = args[len(args)-1]
+		}
+		if trackName == "" {
+			if username == "" {
+				verbose.Printf("command info track failed: missing track and username")
+				fmt.Println("Track name is required unless a username is configured.")
+				return
+			}
+
+			tracks, err := api.GetRecentTracks(username, 1)
+			if err != nil {
+				verbose.Printf("command info track failed: %v", err)
+				fmt.Println("Failed to get recent tracks:", err)
+				return
+			}
+			if len(tracks) == 0 {
+				verbose.Printf("command info track: no recent tracks for %s", username)
+				fmt.Println("No recent tracks found.")
+				return
+			}
+
+			trackName = tracks[0].Name
+			artistName = tracks[0].Artist.Name
+		}
+
+		if artistName == "" {
+			verbose.Printf("command info track failed: missing artist for %s", trackName)
+			fmt.Println("Artist name is required. Pass it as the second argument or with --artist.")
+			return
+		}
+
+		track, err := api.GetTrackInfo(artistName, trackName, username)
+		if err != nil {
+			verbose.Printf("command info track failed: %v", err)
+			fmt.Println("Failed to get track:", err)
+			return
+		}
+		if track == nil {
+			if username == "" {
+				verbose.Printf("command info track: track not found and no username fallback")
+				fmt.Println("Track not found.")
+				return
+			}
+
+			verbose.Printf("command info track: track not found, falling back to recent track for %s", username)
+			tracks, err := api.GetRecentTracks(username, 1)
+			if err != nil {
+				verbose.Printf("command info track fallback failed: %v", err)
+				fmt.Println("Track not found, and failed to get recent tracks:", err)
+				return
+			}
+			if len(tracks) == 0 {
+				verbose.Printf("command info track fallback: no recent tracks for %s", username)
+				fmt.Println("Track not found, and no recent tracks found.")
+				return
+			}
+
+			track = &tracks[0]
+		}
+		verbose.Printf("command info track rendering track: %s", track.Name)
+		output.RenderTrackInfo(*track)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(infoCmd)
 	infoCmd.AddCommand(infoArtistCmd)
 	infoArtistCmd.Flags().StringP("username", "u", "", "Username")
-
+	infoCmd.AddCommand(infoTrackCmd)
+	infoTrackCmd.Flags().StringP("username", "u", "", "Username")
 }

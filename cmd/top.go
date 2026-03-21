@@ -40,7 +40,7 @@ var topCmd = &cobra.Command{
 }
 
 var topArtistsCmd = &cobra.Command{
-	Use:   "artists",
+	Use:   "artists [username]",
 	Short: "Show a user's top artists",
 	Run: func(cmd *cobra.Command, args []string) {
 		username := viper.GetString("username")
@@ -75,7 +75,7 @@ var topArtistsCmd = &cobra.Command{
 }
 
 var topTracksCmd = &cobra.Command{
-	Use:   "tracks",
+	Use:   "tracks [username]",
 	Short: "Show a user's top tracks",
 	Run: func(cmd *cobra.Command, args []string) {
 		username := viper.GetString("username")
@@ -110,7 +110,7 @@ var topTracksCmd = &cobra.Command{
 }
 
 var topAlbumsCmd = &cobra.Command{
-	Use:   "albums",
+	Use:   "albums [username]",
 	Short: "Show a user's top albums",
 	Run: func(cmd *cobra.Command, args []string) {
 		username := viper.GetString("username")
