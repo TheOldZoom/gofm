@@ -42,7 +42,7 @@ func GetPageImageURL(pageURL string) (string, error) {
 		if err != nil {
 			return nil, err
 		}
-		setBrowserHeaders(req, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+		setPageHeaders(req)
 		return req, nil
 	})
 	if err != nil {
@@ -57,6 +57,10 @@ func GetPageImageURL(pageURL string) (string, error) {
 				ttl = retryAfter
 			}
 			cache.StorePageImageRateLimit(pageURL, err, ttl)
+		} else if isPageImageMissStatus(resp.StatusCode) {
+			verbose.Printf("page image lookup unavailable, caching miss: %s status=%d", pageURL, resp.StatusCode)
+			cache.StorePageImageMiss(pageURL, pageImageMissTTL)
+			return "", nil
 		}
 		return "", err
 	}
@@ -122,13 +126,20 @@ func isPlaceholderImageURL(imageURL string) bool {
 	return strings.Contains(imageURL, lastFMPlaceholderImageID)
 }
 
+func isPageImageMissStatus(statusCode int) bool {
+	return statusCode == http.StatusForbidden ||
+		statusCode == http.StatusNotFound ||
+		statusCode == http.StatusNotAcceptable ||
+		statusCode == http.StatusGone
+}
+
 func imageURLExists(imageURL string) (bool, error) {
 	_, resp, err := doRequestWithRetries("page image verify", func() (*http.Request, error) {
 		req, err := http.NewRequest(http.MethodGet, imageURL, nil)
 		if err != nil {
 			return nil, err
 		}
-		setBrowserHeaders(req, "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+		setImageHeaders(req)
 		return req, nil
 	})
 	if err != nil {

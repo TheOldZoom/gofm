@@ -41,9 +41,21 @@ func setBrowserHeaders(req *http.Request, accept string) {
 	req.Header.Set("User-Agent", browserUserAgent)
 	req.Header.Set("Accept", accept)
 	req.Header.Set("Accept-Language", "en-US,en;q=0.9")
+}
+
+func setAPIHeaders(req *http.Request) {
+	setBrowserHeaders(req, "application/json,text/plain,*/*")
 	req.Header.Set("Cache-Control", "no-cache")
 	req.Header.Set("Pragma", "no-cache")
 	req.Header.Set("DNT", "1")
+}
+
+func setPageHeaders(req *http.Request) {
+	setBrowserHeaders(req, "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+}
+
+func setImageHeaders(req *http.Request) {
+	setBrowserHeaders(req, "image/*,*/*;q=0.8")
 }
 
 func (c *Client) Get(method string, params map[string]string, out any) error {
@@ -60,7 +72,7 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 	if err != nil {
 		return err
 	}
-	setBrowserHeaders(req, "application/json,text/plain,*/*")
+	setAPIHeaders(req)
 	verbose.Printf("lastfm request: %s", req.URL.String())
 
 	body, resp, err := doRequestWithRetries("lastfm api", func() (*http.Request, error) {
@@ -68,7 +80,7 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 		if err != nil {
 			return nil, err
 		}
-		setBrowserHeaders(req, "application/json,text/plain,*/*")
+		setAPIHeaders(req)
 		return req, nil
 	})
 	if err != nil {
