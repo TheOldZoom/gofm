@@ -39,15 +39,13 @@ var rootCmd = &cobra.Command{
 	Use:   "gofm",
 	Short: "A CLI for Last.fm",
 
-	Run: func(cmd *cobra.Command, args []string) {
-	},
+	// Run: func(cmd *cobra.Command, args []string) {
+	// },
 }
 
 func Execute() {
-	verbose.Printf("executing root command")
 	err := rootCmd.Execute()
 	if err != nil {
-		verbose.Printf("root command failed: %v", err)
 		os.Exit(1)
 	}
 }
