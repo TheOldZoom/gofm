@@ -28,7 +28,7 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 		tracks = tracks[:limit]
 	}
 
-	enrichTracksConcurrently("recent", tracks)
+	enrichTracksConcurrently("recent", tracks, false)
 
 	verbose.Printf("fetched %d recent tracks for %s", len(tracks), username)
 	return tracks, nil
@@ -105,7 +105,7 @@ func GetUserTopTracks(username string, limit int) ([]models.Track, error) {
 		tracks = tracks[:limit]
 	}
 
-	enrichTracksConcurrently("top", tracks)
+	enrichTracksConcurrently("top", tracks, true)
 
 	verbose.Printf("fetched %d top tracks for %s", len(tracks), username)
 	return tracks, nil

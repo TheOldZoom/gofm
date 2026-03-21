@@ -7,7 +7,7 @@ import (
 	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
-func enrichTracksConcurrently(source string, tracks []models.Track) {
+func enrichTracksConcurrently(source string, tracks []models.Track, includeAlbum bool) {
 	var wg sync.WaitGroup
 
 	for i := range tracks {
@@ -15,6 +15,12 @@ func enrichTracksConcurrently(source string, tracks []models.Track) {
 
 		go func(track *models.Track) {
 			defer wg.Done()
+
+			if includeAlbum {
+				if err := EnrichTrackAlbumFromAPI(track); err != nil {
+					verbose.Printf("%s track album enrichment failed for %s - %s: %v", source, track.Artist.Name, track.Name, err)
+				}
+			}
 
 			if err := EnrichTrackImageFromPage(track); err != nil {
 				verbose.Printf("%s track image fallback failed for %s: %v", source, track.Name, err)

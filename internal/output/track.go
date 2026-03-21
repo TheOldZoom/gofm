@@ -21,7 +21,7 @@ func RenderTrack(track models.Track, title string) {
 		infoLines = append(infoLines,
 			"",
 			"",
-			fmt.Sprintf("Album: %s", track.Album.Name),
+			fmt.Sprintf("%s", track.Album.Name),
 		)
 	}
 
