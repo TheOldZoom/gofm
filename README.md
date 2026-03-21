@@ -165,4 +165,4 @@ Before opening a PR:
 
 ## License
 
-MIT. See `[LICENSE](/LICENSE)`.
+MIT. See [LICENSE](/LICENSE).
