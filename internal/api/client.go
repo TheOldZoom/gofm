@@ -3,7 +3,6 @@ package api
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 	"net/url"
 
@@ -64,16 +63,16 @@ func (c *Client) Get(method string, params map[string]string, out any) error {
 	setBrowserHeaders(req, "application/json,text/plain,*/*")
 	verbose.Printf("lastfm request: %s", req.URL.String())
 
-	resp, err := http.DefaultClient.Do(req)
+	body, resp, err := doRequestWithRetries("lastfm api", func() (*http.Request, error) {
+		req, err := http.NewRequest(http.MethodGet, BaseURL+"?"+q.Encode(), nil)
+		if err != nil {
+			return nil, err
+		}
+		setBrowserHeaders(req, "application/json,text/plain,*/*")
+		return req, nil
+	})
 	if err != nil {
 		verbose.Printf("lastfm request failed: %v", err)
-		return err
-	}
-
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
 		return err
 	}
 

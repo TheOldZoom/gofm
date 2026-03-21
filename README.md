@@ -163,13 +163,10 @@ Here’s a more structured, actionable, and hierarchical **TODO for your Last.fm
 * Support JSON output globally (`--json`)
 * Add terminal formatting: tables, colors, alignment
 * Pagination for long lists
-* Optional ASCII or tiny cover art in terminal
-* Verbose/debug mode for API requests (`--verbose`)
 
 ### 8. Developer & Maintenance
 
 * Add tests for config loading and API calls
-* Add caching for repeated API requests
 * Automatic rate-limit handling or retries
 
 

@@ -2,7 +2,6 @@ package api
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 	"regexp"
 	"strings"
@@ -38,60 +37,53 @@ func GetPageImageURL(pageURL string) (string, error) {
 		}
 	}
 
-	for attempt := 1; attempt <= 2; attempt++ {
-		verbose.Printf("page image lookup attempt %d: %s", attempt, pageURL)
-
+	body, resp, err := doRequestWithRetries("page image lookup", func() (*http.Request, error) {
 		req, err := http.NewRequest(http.MethodGet, pageURL, nil)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 		setBrowserHeaders(req, "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+		return req, nil
+	})
+	if err != nil {
+		return "", err
+	}
 
-		resp, err := http.DefaultClient.Do(req)
-		if err != nil {
-			return "", err
-		}
-
-		body, readErr := io.ReadAll(resp.Body)
-		resp.Body.Close()
-		if readErr != nil {
-			verbose.Printf("page image read failed: %v", readErr)
-			return "", readErr
-		}
-		if resp.StatusCode != http.StatusOK {
-			err := fmt.Errorf("page returned status code %d", resp.StatusCode)
-			if resp.StatusCode == http.StatusTooManyRequests {
-				cache.StorePageImageRateLimit(pageURL, err, pageImageRateLimitTTL)
+	if resp.StatusCode != http.StatusOK {
+		err := fmt.Errorf("page returned status code %d", resp.StatusCode)
+		if resp.StatusCode == http.StatusTooManyRequests {
+			ttl := pageImageRateLimitTTL
+			if retryAfter, ok := retryAfterDelay(resp); ok {
+				ttl = retryAfter
 			}
-			return "", err
+			cache.StorePageImageRateLimit(pageURL, err, ttl)
 		}
+		return "", err
+	}
 
-		matches := lastFMOGImagePattern.FindSubmatch(body)
-		if len(matches) < 2 {
-			verbose.Printf("page image not found in metadata: %s", pageURL)
-			cache.StorePageImageMiss(pageURL, pageImageMissTTL)
-			return "", nil
-		}
+	matches := lastFMOGImagePattern.FindSubmatch(body)
+	if len(matches) < 2 {
+		verbose.Printf("page image not found in metadata: %s", pageURL)
+		cache.StorePageImageMiss(pageURL, pageImageMissTTL)
+		return "", nil
+	}
 
-		imageURL := string(matches[1])
-		if isPlaceholderImageURL(imageURL) {
-			verbose.Printf("page image was placeholder: %s", imageURL)
-			cache.StorePageImageMiss(pageURL, pageImageMissTTL)
-			return "", nil
-		}
+	imageURL := string(matches[1])
+	if isPlaceholderImageURL(imageURL) {
+		verbose.Printf("page image was placeholder: %s", imageURL)
+		cache.StorePageImageMiss(pageURL, pageImageMissTTL)
+		return "", nil
+	}
 
-		ok, err := imageURLExists(imageURL)
-		if err != nil {
-			verbose.Printf("page image verification failed: %v", err)
-			return "", err
-		}
-		if ok {
-			verbose.Printf("page image verified: %s", imageURL)
-			cache.StorePageImageURL(pageURL, imageURL, pageImageSuccessTTL)
-			return imageURL, nil
-		}
-
-		verbose.Printf("page image missing, refetching metadata: %s", imageURL)
+	ok, err := imageURLExists(imageURL)
+	if err != nil {
+		verbose.Printf("page image verification failed: %v", err)
+		return "", err
+	}
+	if ok {
+		verbose.Printf("page image verified: %s", imageURL)
+		cache.StorePageImageURL(pageURL, imageURL, pageImageSuccessTTL)
+		return imageURL, nil
 	}
 
 	verbose.Printf("page image lookup exhausted retries: %s", pageURL)
@@ -131,17 +123,17 @@ func isPlaceholderImageURL(imageURL string) bool {
 }
 
 func imageURLExists(imageURL string) (bool, error) {
-	req, err := http.NewRequest(http.MethodGet, imageURL, nil)
+	_, resp, err := doRequestWithRetries("page image verify", func() (*http.Request, error) {
+		req, err := http.NewRequest(http.MethodGet, imageURL, nil)
+		if err != nil {
+			return nil, err
+		}
+		setBrowserHeaders(req, "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+		return req, nil
+	})
 	if err != nil {
 		return false, err
 	}
-	setBrowserHeaders(req, "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
-
-	resp, err := http.DefaultClient.Do(req)
-	if err != nil {
-		return false, err
-	}
-	defer resp.Body.Close()
 
 	ok := resp.StatusCode >= http.StatusOK && resp.StatusCode < http.StatusMultipleChoices
 	if !ok {
