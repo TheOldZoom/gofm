@@ -24,6 +24,7 @@ package cmd
 import (
 	"errors"
 	"os"
+	"path/filepath"
 
 	"github.com/theOldZoom/gofm/internal/config"
 	"github.com/theOldZoom/gofm/internal/tui/setup"
@@ -62,10 +63,14 @@ func init() {
 }
 
 func initConfig() {
+
 	if cfgFile != "" {
 		verbose.Printf("using explicit config file: %s", cfgFile)
 		config.SetPath(cfgFile)
 		viper.SetConfigFile(cfgFile)
+		if filepath.Ext(cfgFile) == "" {
+			viper.SetConfigType("yaml")
+		}
 	} else {
 		path, err := config.Path()
 		cobra.CheckErr(err)
