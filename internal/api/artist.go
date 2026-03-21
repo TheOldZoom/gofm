@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/spf13/viper"
 	"github.com/theOldZoom/gofm/internal/cache"
 	"github.com/theOldZoom/gofm/internal/models"
 	"github.com/theOldZoom/gofm/internal/verbose"
@@ -19,6 +20,33 @@ const (
 	pageImageMissTTL      = 24 * time.Hour
 	pageImageRateLimitTTL = 15 * time.Minute
 )
+
+func GetArtistInfo(artistName string) (*models.Artist, error) {
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	username := viper.GetString("username")
+	var resp models.ArtistGetInfoResponse
+
+	err := client.Get("artist.getInfo", map[string]string{
+		"artist":   artistName,
+		"username": username,
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
+	verbose.Printf("fetched artist info for %s", artistName)
+	if resp.Artist.Name == "" {
+		verbose.Printf("artist info not found for %s", artistName)
+		return nil, nil
+	}
+
+	if err := EnrichArtistImageFromPage(&resp.Artist); err != nil {
+		verbose.Printf("info artist image fallback failed for %s: %v", resp.Artist.Name, err)
+	}
+
+	return &resp.Artist, nil
+}
 
 var lastFMOGImagePattern = regexp.MustCompile(`<meta[^>]+property="og:image"[^>]+content="([^"]+)"`)
 

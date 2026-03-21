@@ -23,8 +23,13 @@ package cmd
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"github.com/theOldZoom/gofm/internal/api"
+	"github.com/theOldZoom/gofm/internal/output"
+	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 // infoCmd represents the info command
@@ -32,12 +37,55 @@ var infoCmd = &cobra.Command{
 	Use:   "info",
 	Short: "Show information about an artist, track, or album",
 
+	// Run: func(cmd *cobra.Command, args []string) {
+	// 	fmt.Println("info called")
+	// },
+}
+
+var infoArtistCmd = &cobra.Command{
+	Use:   "artist",
+	Short: "Show information about an artist",
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("info called")
+		username, _ := cmd.Flags().GetString("username")
+		if username == "" {
+			username = viper.GetString("username")
+		}
+		artistName := strings.Join(args, " ")
+		if artistName == "" {
+			tracks, err := api.GetRecentTracks(username, 1)
+			if err != nil {
+				verbose.Printf("command info artist failed: %v", err)
+				fmt.Println("Failed to get recent tracks:", err)
+				return
+			}
+			artistName = tracks[0].Artist.Name
+			if artistName == "" {
+				verbose.Printf("command info artist: artist not found")
+				fmt.Println("Artist not found.")
+				return
+			}
+
+		}
+		verbose.Printf("command info artist: artist=%q args=%v", artistName, args)
+		artist, err := api.GetArtistInfo(artistName)
+		if err != nil {
+			verbose.Printf("command info artist failed: %v", err)
+			fmt.Println("Failed to get artist:", err)
+			return
+		}
+		if artist == nil {
+			verbose.Printf("command info artist: artist not found")
+			fmt.Println("Artist not found.")
+			return
+		}
+		verbose.Printf("command info artist rendering artist: %s", artist.Name)
+		output.RenderArtistInfo(*artist)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(infoCmd)
+	infoCmd.AddCommand(infoArtistCmd)
+	infoArtistCmd.Flags().StringP("username", "u", "", "Username")
 
 }
