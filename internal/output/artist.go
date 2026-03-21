@@ -2,10 +2,12 @@ package output
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/theOldZoom/gofm/internal/image"
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/utils"
 	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
@@ -17,11 +19,17 @@ func RenderArtist(artist models.Artist, title string) {
 		title,
 		fmt.Sprintf("\x1b[38;2;100;100;100m%s", artist.Name),
 	}
+
 	if artist.PlayCount != "" {
+		playCount := artist.PlayCount
+		if plays, err := strconv.Atoi(artist.PlayCount); err == nil {
+			playCount = utils.Commas(plays)
+		}
+
 		infoLines = append(infoLines,
 			"",
 			"",
-			fmt.Sprintf("Play Count: %s", artist.PlayCount),
+			fmt.Sprintf("%s plays", playCount),
 		)
 	}
 
