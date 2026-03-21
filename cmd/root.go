@@ -38,6 +38,9 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "gofm",
 	Short: "A CLI for Last.fm",
+	CompletionOptions: cobra.CompletionOptions{
+		DisableDefaultCmd: true,
+	},
 
 	// Run: func(cmd *cobra.Command, args []string) {
 	// },
