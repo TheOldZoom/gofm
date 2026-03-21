@@ -109,7 +109,7 @@ func RenderTrackInfo(track models.Track) {
 	if userPlays := formatCount(track.UserPlayCount, "plays"); userPlays != "" {
 		stats = append(stats, fmt.Sprintf("%s", userPlays))
 	}
-	if duration := formatTrackDuration(track.Duration); duration != "" {
+	if duration := formatTrackDuration(string(track.Duration)); duration != "" {
 		stats = append(stats, fmt.Sprintf("%s", duration))
 	}
 	if track.UserLoved == "1" {

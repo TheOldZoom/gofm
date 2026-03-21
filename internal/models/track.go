@@ -14,6 +14,24 @@ type TopTracksResponse struct {
 	} `json:"toptracks"`
 }
 
+type StringValue string
+
+func (s *StringValue) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		*s = StringValue(text)
+		return nil
+	}
+
+	var number json.Number
+	if err := json.Unmarshal(data, &number); err == nil {
+		*s = StringValue(number.String())
+		return nil
+	}
+
+	return json.Unmarshal(data, (*string)(s))
+}
+
 type TrackStreamable struct {
 	Text      string
 	FullTrack string
@@ -46,6 +64,12 @@ type TrackArtist struct {
 }
 
 func (a *TrackArtist) UnmarshalJSON(data []byte) error {
+	var text string
+	if err := json.Unmarshal(data, &text); err == nil {
+		a.Name = text
+		return nil
+	}
+
 	var raw struct {
 		Text string `json:"#text"`
 		Name string `json:"name"`
@@ -140,7 +164,7 @@ type Track struct {
 	Name       string          `json:"name"`
 	MBID       string          `json:"mbid"`
 	Url        string          `json:"url"`
-	Duration   string          `json:"duration"`
+	Duration   StringValue     `json:"duration"`
 	Streamable TrackStreamable `json:"streamable"`
 	Listeners  string          `json:"listeners"`
 	Artist     TrackArtist     `json:"artist"`

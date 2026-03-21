@@ -128,7 +128,7 @@ var infoTrackCmd = &cobra.Command{
 
 		if artistName == "" {
 			verbose.Printf("command info track failed: missing artist for %s", trackName)
-			fmt.Println("Artist name is required. Pass it as the second argument or with --artist.")
+			fmt.Println("Artist name is required. Pass it as the second argument.")
 			return
 		}
 
@@ -165,10 +165,76 @@ var infoTrackCmd = &cobra.Command{
 	},
 }
 
+var infoAlbumCmd = &cobra.Command{
+	Use:   "album \"[album name]\" \"[artist name]\"",
+	Short: "Show information about an album",
+	Run: func(cmd *cobra.Command, args []string) {
+		username, _ := cmd.Flags().GetString("username")
+		if username == "" {
+			username = viper.GetString("username")
+		}
+		albumName := ""
+		artistName := ""
+		switch {
+		case len(args) == 0:
+		case artistName != "":
+			albumName = strings.Join(args, " ")
+		case len(args) == 1:
+			albumName = args[0]
+		default:
+			albumName = strings.Join(args[:len(args)-1], " ")
+			artistName = args[len(args)-1]
+		}
+		if albumName == "" {
+			if username == "" {
+				verbose.Printf("command info album failed: missing album and username")
+				fmt.Println("Album name is required unless a username is configured.")
+				return
+			}
+
+			tracks, err := api.GetRecentTracks(username, 1)
+			if err != nil {
+				verbose.Printf("command info album failed: %v", err)
+				fmt.Println("Failed to get recent tracks:", err)
+				return
+			}
+			if len(tracks) == 0 {
+				verbose.Printf("command info album: no recent tracks for %s", username)
+				fmt.Println("No recent tracks found.")
+				return
+			}
+
+			albumName = tracks[0].Album.Name
+			artistName = tracks[0].Artist.Name
+		}
+
+		if artistName == "" {
+			verbose.Printf("command info album failed: missing artist for %s", albumName)
+			fmt.Println("Artist name is required. Pass it as the second argument.")
+			return
+		}
+		album, err := api.GetAlbumInfo(artistName, albumName, username)
+		if err != nil {
+			verbose.Printf("command info album failed: %v", err)
+			fmt.Println("Failed to get album:", err)
+			return
+		}
+		if album == nil {
+			verbose.Printf("command info album: album not found")
+			fmt.Println("Album not found.")
+			return
+		}
+		verbose.Printf("command info album rendering album: %s", album.Name)
+		output.RenderAlbumInfo(*album)
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(infoCmd)
 	infoCmd.AddCommand(infoArtistCmd)
 	infoArtistCmd.Flags().StringP("username", "u", "", "Username")
 	infoCmd.AddCommand(infoTrackCmd)
 	infoTrackCmd.Flags().StringP("username", "u", "", "Username")
+	infoCmd.AddCommand(infoAlbumCmd)
+	infoAlbumCmd.Flags().StringP("username", "u", "", "Username")
 }
