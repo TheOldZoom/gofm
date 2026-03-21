@@ -34,6 +34,14 @@ func GetRecentTracks(username string, limit int) ([]models.Track, error) {
 	return tracks, nil
 }
 
+func EnrichRecentTrackPlays(username string, tracks []models.Track) {
+	if username == "" || len(tracks) == 0 {
+		return
+	}
+
+	enrichTrackPlayCountsConcurrently("recent", username, tracks)
+}
+
 func GetNowPlaying(username string) (*models.Track, error) {
 	client := &Client{
 		ApiKey: viper.GetString("api_key"),
@@ -59,6 +67,16 @@ func GetNowPlaying(username string) (*models.Track, error) {
 
 	verbose.Printf("no now playing track for %s", username)
 	return nil, nil
+}
+
+func EnrichNowPlayingTrackPlays(username string, track *models.Track) {
+	if username == "" || track == nil {
+		return
+	}
+
+	if err := EnrichTrackUserPlayCountFromAPI(track, username); err != nil {
+		verbose.Printf("now playing track playcount enrichment failed for %s: %v", track.Name, err)
+	}
 }
 
 func GetUserTopAlbums(username string, limit int) ([]models.Album, error) {

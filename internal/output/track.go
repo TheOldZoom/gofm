@@ -32,10 +32,18 @@ func RenderTrack(track models.Track, title string) {
 		infoLines = append(infoLines,
 			fmt.Sprintf("%s plays", playCount),
 		)
+	} else if track.UserPlayCount != "" {
+		playCount := track.UserPlayCount
+		if plays, err := strconv.Atoi(track.UserPlayCount); err == nil {
+			playCount = utils.Commas(plays)
+		}
+		infoLines = append(infoLines,
+			fmt.Sprintf("%s plays", playCount),
+		)
 	}
 
 	if track.Album.Name != "" {
-		if track.PlayCount == "" {
+		if track.PlayCount == "" && track.UserPlayCount == "" {
 			infoLines = append(infoLines,
 				"",
 			)
@@ -153,14 +161,14 @@ func RenderTrackInfo(track models.Track) {
 		return
 	}
 
-	imgLines, err := image.RenderANSILines(img, trackImageWidth)
+	imgLines, err := image.RenderANSILines(img, 40)
 	if err != nil {
 		verbose.Printf("track image render failed for %s: %v", track.Name, err)
 		printLines(infoLines)
 		return
 	}
 
-	image.RenderSideBySide(imgLines, infoLines, trackImageWidth)
+	image.RenderSideBySide(imgLines, infoLines, 40)
 }
 
 func bestTrackImageURL(track models.Track) string {

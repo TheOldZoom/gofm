@@ -1,5 +1,33 @@
 package models
 
+import "encoding/json"
+
+type Tag struct {
+	Name string `json:"name"`
+	Url  string `json:"url"`
+}
+
+type AlbumTags struct {
+	Tag []Tag `json:"tag"`
+}
+
+func (t *AlbumTags) UnmarshalJSON(data []byte) error {
+	var empty string
+	if err := json.Unmarshal(data, &empty); err == nil {
+		t.Tag = nil
+		return nil
+	}
+
+	type alias AlbumTags
+	var raw alias
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	t.Tag = raw.Tag
+	return nil
+}
+
 type TopAlbumsResponse struct {
 	TopAlbums struct {
 		Album []Album `json:"album"`
@@ -22,12 +50,7 @@ type Album struct {
 	Tracks struct {
 		Track []Track `json:"track"`
 	} `json:"tracks"`
-	Tags struct {
-		Tag []struct {
-			Name string `json:"name"`
-			Url  string `json:"url"`
-		} `json:"tag"`
-	} `json:"tags"`
+	Tags AlbumTags `json:"tags"`
 	Wiki struct {
 		Published string `json:"published"`
 		Summary   string `json:"summary"`

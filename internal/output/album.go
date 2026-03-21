@@ -148,14 +148,14 @@ func RenderAlbumInfo(album models.Album) {
 		return
 	}
 
-	imgLines, err := image.RenderANSILines(img, albumImageWidth)
+	imgLines, err := image.RenderANSILines(img, 40)
 	if err != nil {
 		verbose.Printf("album image render failed for %s: %v", album.Name, err)
 		fmt.Println(strings.Join(infoLines, "\n"))
 		return
 	}
 
-	image.RenderSideBySide(imgLines, infoLines, albumImageWidth)
+	image.RenderSideBySide(imgLines, infoLines, 40)
 }
 
 func bestAlbumImageURL(album models.Album) string {

@@ -133,14 +133,14 @@ func RenderArtistInfo(artist models.Artist) {
 		return
 	}
 
-	imgLines, err := image.RenderANSILines(img, artistImageWidth)
+	imgLines, err := image.RenderANSILines(img, 40)
 	if err != nil {
 		verbose.Printf("artist image render failed for %s: %v", artist.Name, err)
 		printLines(infoLines)
 		return
 	}
 
-	image.RenderSideBySide(imgLines, infoLines, artistImageWidth)
+	image.RenderSideBySide(imgLines, infoLines, 40)
 }
 
 func bestArtistImageURL(artist models.Artist) string {

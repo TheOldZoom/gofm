@@ -31,6 +31,24 @@ func enrichTracksConcurrently(source string, tracks []models.Track, includeAlbum
 	wg.Wait()
 }
 
+func enrichTrackPlayCountsConcurrently(source string, username string, tracks []models.Track) {
+	var wg sync.WaitGroup
+
+	for i := range tracks {
+		wg.Add(1)
+
+		go func(track *models.Track) {
+			defer wg.Done()
+
+			if err := EnrichTrackUserPlayCountFromAPI(track, username); err != nil {
+				verbose.Printf("%s track playcount enrichment failed for %s - %s: %v", source, track.Artist.Name, track.Name, err)
+			}
+		}(&tracks[i])
+	}
+
+	wg.Wait()
+}
+
 func enrichArtistsConcurrently(source string, artists []models.Artist) {
 	var wg sync.WaitGroup
 

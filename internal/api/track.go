@@ -37,6 +37,33 @@ func GetTrackInfo(artistName string, trackName string, username string) (*models
 	return &resp.Track, nil
 }
 
+func EnrichTrackUserPlayCountFromAPI(track *models.Track, username string) error {
+	if track == nil || username == "" || track.Name == "" || track.Artist.Name == "" {
+		return nil
+	}
+
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	var resp models.TrackGetInfoResponse
+
+	err := client.Get("track.getInfo", map[string]string{
+		"artist":      track.Artist.Name,
+		"track":       track.Name,
+		"username":    username,
+		"autocorrect": "1",
+	}, &resp)
+	if err != nil {
+		return err
+	}
+
+	if resp.Track.UserPlayCount != "" {
+		track.UserPlayCount = resp.Track.UserPlayCount
+	}
+
+	return nil
+}
+
 func EnrichTrackAlbumFromAPI(track *models.Track) error {
 	if track == nil || track.Name == "" || track.Artist.Name == "" || track.Album.Name != "" {
 		return nil
