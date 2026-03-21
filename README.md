@@ -114,20 +114,6 @@ Here’s a more structured, actionable, and hierarchical **TODO for your Last.fm
 
 ## GoFM TODO 
 
-### 1. Core Commands (Must-Have)
-
-* `now` – Show currently playing track
-
-  * Flags: `--user`, `--json`, `--verbose`
-* `recent` – Show recently played tracks
-
-  * Flags: `--user`, `--limit`, `--json`
-
-### 2. Top Lists
-
-* `top artists` – Show user’s top artists
-* `top tracks` – Show user’s top tracks
-* Shared flags: `--user`, `--limit`, `--period`, `--json`
 
 ### 3. Info Commands
 
@@ -164,10 +150,6 @@ Here’s a more structured, actionable, and hierarchical **TODO for your Last.fm
 * Add terminal formatting: tables, colors, alignment
 * Pagination for long lists
 
-### 8. Developer & Maintenance
-
-* Add tests for config loading and API calls
-* Automatic rate-limit handling or retries
 
 
 ---
