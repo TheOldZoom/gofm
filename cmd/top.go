@@ -33,7 +33,7 @@ import (
 
 var topCmd = &cobra.Command{
 	Use:   "top",
-	Short: "Show a user's top artists or tracks",
+	Short: "Show a user's top artists, tracks, or albums",
 
 	// Run: func(cmd *cobra.Command, args []string) {
 	// },
