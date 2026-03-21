@@ -6,16 +6,38 @@ import (
 	"net/http"
 	"regexp"
 	"strings"
+	"time"
 
+	"github.com/theOldZoom/gofm/internal/cache"
 	"github.com/theOldZoom/gofm/internal/models"
 	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
 const lastFMPlaceholderImageID = "2a96cbd8b46e442fc41c2b86b821562f"
 
+const (
+	pageImageSuccessTTL   = 7 * 24 * time.Hour
+	pageImageMissTTL      = 24 * time.Hour
+	pageImageRateLimitTTL = 15 * time.Minute
+)
+
 var lastFMOGImagePattern = regexp.MustCompile(`<meta[^>]+property="og:image"[^>]+content="([^"]+)"`)
 
 func GetPageImageURL(pageURL string) (string, error) {
+	if imageURL, err, ok := cache.LookupPageImageURL(pageURL); ok {
+		switch {
+		case err != nil:
+			verbose.Printf("page image cache hit (error): %s -> %v", pageURL, err)
+			return "", err
+		case imageURL == "":
+			verbose.Printf("page image cache hit (miss): %s", pageURL)
+			return "", nil
+		default:
+			verbose.Printf("page image cache hit: %s -> %s", pageURL, imageURL)
+			return imageURL, nil
+		}
+	}
+
 	for attempt := 1; attempt <= 2; attempt++ {
 		verbose.Printf("page image lookup attempt %d: %s", attempt, pageURL)
 
@@ -37,18 +59,24 @@ func GetPageImageURL(pageURL string) (string, error) {
 			return "", readErr
 		}
 		if resp.StatusCode != http.StatusOK {
-			return "", fmt.Errorf("artist page returned status code %d", resp.StatusCode)
+			err := fmt.Errorf("page returned status code %d", resp.StatusCode)
+			if resp.StatusCode == http.StatusTooManyRequests {
+				cache.StorePageImageRateLimit(pageURL, err, pageImageRateLimitTTL)
+			}
+			return "", err
 		}
 
 		matches := lastFMOGImagePattern.FindSubmatch(body)
 		if len(matches) < 2 {
 			verbose.Printf("page image not found in metadata: %s", pageURL)
+			cache.StorePageImageMiss(pageURL, pageImageMissTTL)
 			return "", nil
 		}
 
 		imageURL := string(matches[1])
 		if isPlaceholderImageURL(imageURL) {
 			verbose.Printf("page image was placeholder: %s", imageURL)
+			cache.StorePageImageMiss(pageURL, pageImageMissTTL)
 			return "", nil
 		}
 
@@ -59,6 +87,7 @@ func GetPageImageURL(pageURL string) (string, error) {
 		}
 		if ok {
 			verbose.Printf("page image verified: %s", imageURL)
+			cache.StorePageImageURL(pageURL, imageURL, pageImageSuccessTTL)
 			return imageURL, nil
 		}
 
@@ -66,6 +95,7 @@ func GetPageImageURL(pageURL string) (string, error) {
 	}
 
 	verbose.Printf("page image lookup exhausted retries: %s", pageURL)
+	cache.StorePageImageMiss(pageURL, pageImageMissTTL)
 	return "", nil
 }
 
