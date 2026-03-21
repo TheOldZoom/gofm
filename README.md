@@ -114,14 +114,6 @@ Here’s a more structured, actionable, and hierarchical **TODO for your Last.fm
 
 ## GoFM TODO 
 
-
-### 3. Info Commands
-
-* `info artist <name>` – Show bio, tags, stats
-* `info track <artist> <track>` – Show track info, playcount, listeners
-* `info album <artist> <album>` – Show album details and tags
-* Flags: `--json`, `--verbose`
-
 ### 4. User & Stats
 
 * `user info <username>` – Show general user stats
