@@ -79,8 +79,6 @@ func GetUserTopAlbums(username string, limit int) ([]models.Album, error) {
 		albums = albums[:limit]
 	}
 
-	enrichAlbumsConcurrently("top", albums)
-
 	verbose.Printf("fetched %d top albums for %s", len(albums), username)
 	return albums, nil
 }
