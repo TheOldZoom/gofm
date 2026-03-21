@@ -61,6 +61,30 @@ func GetNowPlaying(username string) (*models.Track, error) {
 	return nil, nil
 }
 
+func GetUserTopAlbums(username string, limit int) ([]models.Album, error) {
+	client := &Client{
+		ApiKey: viper.GetString("api_key"),
+	}
+	var resp models.TopAlbumsResponse
+
+	err := client.Get("user.getTopAlbums", map[string]string{
+		"user":  username,
+		"limit": fmt.Sprintf("%d", limit),
+	}, &resp)
+	if err != nil {
+		return nil, err
+	}
+	albums := resp.TopAlbums.Album
+	if len(albums) > limit {
+		albums = albums[:limit]
+	}
+
+	enrichAlbumsConcurrently("top", albums)
+
+	verbose.Printf("fetched %d top albums for %s", len(albums), username)
+	return albums, nil
+}
+
 func GetUserTopArtists(username string, limit int) ([]models.Artist, error) {
 	client := &Client{
 		ApiKey: viper.GetString("api_key"),

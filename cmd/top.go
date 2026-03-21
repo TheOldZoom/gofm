@@ -109,10 +109,47 @@ var topTracksCmd = &cobra.Command{
 	},
 }
 
+var topAlbumsCmd = &cobra.Command{
+	Use:   "albums",
+	Short: "Show a user's top albums",
+	Run: func(cmd *cobra.Command, args []string) {
+		username := viper.GetString("username")
+		if len(args) == 1 {
+			username = args[0]
+		}
+		if username == "" {
+			verbose.Printf("command top albums aborted: missing username")
+			fmt.Println("No username provided. Pass one explicitly or run setup first.")
+			return
+		}
+		limit, err := cmd.Flags().GetInt("limit")
+		if err != nil {
+			limit = 10
+		}
+		if limit < 1 {
+			limit = 10
+		}
+		verbose.Printf("command top albums: username=%q limit=%d args=%v", username, limit, args)
+		albums, err := api.GetUserTopAlbums(username, limit)
+		if err != nil {
+			verbose.Printf("command top albums failed: %v", err)
+			fmt.Println("Failed to get top albums:", err)
+			return
+		}
+		verbose.Printf("command top albums rendering %d albums", len(albums))
+		for i, album := range albums {
+			output.RenderAlbum(album, fmt.Sprintf("%d. %s", i+1, album.Name))
+			fmt.Println()
+		}
+	},
+}
+
 func init() {
 	rootCmd.AddCommand(topCmd)
 	topCmd.AddCommand(topArtistsCmd)
 	topArtistsCmd.Flags().IntP("limit", "l", 10, "Number of artists to show")
 	topCmd.AddCommand(topTracksCmd)
 	topTracksCmd.Flags().IntP("limit", "l", 10, "Number of tracks to show")
+	topCmd.AddCommand(topAlbumsCmd)
+	topAlbumsCmd.Flags().IntP("limit", "l", 10, "Number of albums to show")
 }

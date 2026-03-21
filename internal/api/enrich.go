@@ -48,3 +48,20 @@ func enrichArtistsConcurrently(source string, artists []models.Artist) {
 
 	wg.Wait()
 }
+
+func enrichAlbumsConcurrently(source string, albums []models.Album) {
+	var wg sync.WaitGroup
+
+	for i := range albums {
+		wg.Add(1)
+
+		go func(album *models.Album) {
+			defer wg.Done()
+
+			if err := EnrichAlbumImageFromPage(album); err != nil {
+				verbose.Printf("%s album image fallback failed for %s: %v", source, album.Name, err)
+			}
+		}(&albums[i])
+	}
+	wg.Wait()
+}
