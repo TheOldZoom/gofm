@@ -58,6 +58,7 @@ var recentCmd = &cobra.Command{
 			fmt.Println("Failed to get recent tracks:", err)
 			return
 		}
+		api.EnrichRecentTrackPlays(username, tracks)
 
 		verbose.Printf("command recent rendering %d tracks", len(tracks))
 		for i, track := range tracks {

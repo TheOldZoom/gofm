@@ -57,6 +57,7 @@ var nowCmd = &cobra.Command{
 			fmt.Println("No track is currently playing.")
 			return
 		}
+		api.EnrichNowPlayingTrackPlays(username, track)
 		verbose.Printf("command now rendering track: %s", track.Name)
 		output.RenderTrack(*track, track.Name)
 
@@ -65,5 +66,4 @@ var nowCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(nowCmd)
-
 }
