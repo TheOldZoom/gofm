@@ -2,10 +2,12 @@ package output
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/theOldZoom/gofm/internal/image"
 	"github.com/theOldZoom/gofm/internal/models"
+	"github.com/theOldZoom/gofm/internal/utils"
 	"github.com/theOldZoom/gofm/internal/verbose"
 )
 
@@ -17,9 +19,24 @@ func RenderTrack(track models.Track, title string) {
 		title,
 		fmt.Sprintf("\x1b[38;2;100;100;100m%s", track.Artist.Name),
 	}
-	if track.Album.Name != "" {
+
+	if track.PlayCount != "" {
+		playCount := track.PlayCount
+		if plays, err := strconv.Atoi(track.PlayCount); err == nil {
+			playCount = utils.Commas(plays)
+		}
 		infoLines = append(infoLines,
-			"",
+			fmt.Sprintf("%s plays", playCount),
+		)
+	}
+
+	if track.Album.Name != "" {
+		if track.PlayCount == "" {
+			infoLines = append(infoLines,
+				"",
+			)
+		}
+		infoLines = append(infoLines,
 			"",
 			fmt.Sprintf("%s", track.Album.Name),
 		)

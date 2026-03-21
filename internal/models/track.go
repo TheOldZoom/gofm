@@ -93,17 +93,18 @@ func (a TrackAlbum) MarshalJSON() ([]byte, error) {
 }
 
 type Track struct {
-	Name   string `json:"name"`
-	Url    string `json:"url"`
+	Name   string      `json:"name"`
+	Url    string      `json:"url"`
 	Artist TrackArtist `json:"artist"`
-	Album  TrackAlbum `json:"album"`
-	Image []struct {
+	Album  TrackAlbum  `json:"album"`
+	Image  []struct {
 		Size string `json:"size"`
 		Url  string `json:"#text"`
 	} `json:"image"`
 	Attr struct {
 		NowPlaying string `json:"nowplaying"`
 	} `json:"@attr,omitempty"`
+	PlayCount string `json:"playcount"`
 }
 
 type TrackGetInfoResponse struct {
