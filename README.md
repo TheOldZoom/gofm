@@ -1,5 +1,7 @@
 # gofm
 
+> The project is being recoded in Typescript, follow the new [repository](https://github.com/theoldzoom/tsfm).
+
 A small terminal CLI for checking a Last.fm user's recent tracks.
 
 `gofm` is a minimal Go command-line app that talks to the Last.fm API, stores your local config, and prints recent listening history in a clean terminal format.
